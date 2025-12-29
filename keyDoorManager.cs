@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using ItemStatsSystem;
 using UnityEngine;
 
 namespace AutoMarkKeyDoor
@@ -41,6 +43,12 @@ namespace AutoMarkKeyDoor
         public int RequireItemId { get; set; }
         
         /// <summary>
+        /// 门的名称（从钥匙物品名称解析而来）
+        /// 用于在地图上标记时显示
+        /// </summary>
+        public string DoorName { get; set; }
+        
+        /// <summary>
         /// 根据位置生成唯一标识符
         /// 使用与游戏内 Door.GetKey() 相同的算法
         /// </summary>
@@ -54,9 +62,81 @@ namespace AutoMarkKeyDoor
             return $"Door_{vec}".GetHashCode();
         }
         
+        /// <summary>
+        /// 根据钥匙物品名称解析门的名称
+        /// 支持三种格式：
+        /// 1. "xx钥匙" -> "xx"
+        /// 2. "xx钥匙-n" -> "xx" (n为数字编号)
+        /// 3. "xxx钥匙卡" -> "xxx"
+        /// </summary>
+        /// <param name="keyItemName">钥匙物品的显示名称</param>
+        /// <returns>解析后的门名称，如果无法解析则返回原名称</returns>
+        public static string ParseDoorNameFromKeyName(string keyItemName)
+        {
+            if (string.IsNullOrEmpty(keyItemName))
+            {
+                return "未知";
+            }
+            
+            // 模式1: "xxx钥匙卡" -> "xxx"
+            // 模式2: "xx钥匙-n" -> "xx" (n为数字编号)
+            // 模式3: "xx钥匙" -> "xx"
+            
+            // 先尝试匹配 "xxx钥匙卡"
+            var matchCard = Regex.Match(keyItemName, @"^(.+?)钥匙卡$");
+            if (matchCard.Success)
+            {
+                return matchCard.Groups[1].Value;
+            }
+            
+            // 尝试匹配 "xx钥匙-n" (带数字编号)
+            var matchWithNumber = Regex.Match(keyItemName, @"^(.+?)钥匙[-－]\d+$");
+            if (matchWithNumber.Success)
+            {
+                return matchWithNumber.Groups[1].Value;
+            }
+            
+            // 尝试匹配 "xx钥匙" (不带编号)
+            var matchSimple = Regex.Match(keyItemName, @"^(.+?)钥匙$");
+            if (matchSimple.Success)
+            {
+                return matchSimple.Groups[1].Value;
+            }
+            
+            // 如果都不匹配，返回原名称
+            return keyItemName;
+        }
+        
+        /// <summary>
+        /// 根据物品ID获取钥匙名称并解析为门名称
+        /// </summary>
+        /// <param name="itemId">物品ID</param>
+        /// <returns>解析后的门名称</returns>
+        public static string GetDoorNameFromItemId(int itemId)
+        {
+            if (itemId <= 0)
+            {
+                return "无钥匙";
+            }
+            
+            try
+            {
+                // 通过 ItemAssetsCollection 获取物品的显示名称
+                ItemMetaData metaData = ItemAssetsCollection.GetMetaData(itemId);
+                string displayName = metaData.DisplayName;
+                return ParseDoorNameFromKeyName(displayName);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[AutoMarkKeyDoor] 获取物品名称失败, ItemId={itemId}: {e.Message}");
+            }
+            
+            return $"钥匙#{itemId}";
+        }
+        
         public override string ToString()
         {
-            return $"DoorInfo[Key={UniqueKey}, Scene={SceneID}, SubScene={SubSceneID}, Pos={Position}, NoRequireItem={NoRequireItem}, RequireItemId={RequireItemId}]";
+            return $"DoorInfo[Key={UniqueKey}, Scene={SceneID}, SubScene={SubSceneID}, Pos={Position}, NoRequireItem={NoRequireItem}, RequireItemId={RequireItemId}, DoorName={DoorName}]";
         }
     }
     
@@ -120,10 +200,14 @@ namespace AutoMarkKeyDoor
                 existingInfo.RequireItemId = requireItemId;
                 existingInfo.SceneID = sceneId;
                 existingInfo.SubSceneID = subSceneId;
+                existingInfo.DoorName = noRequireItem ? "普通门" : DoorInfo.GetDoorNameFromItemId(requireItemId);
                 
                 Debug.Log(LogPrefix + $"门已存在，更新信息: {existingInfo}");
                 return existingInfo;
             }
+            
+            // 根据钥匙物品ID解析门名称
+            string doorName = noRequireItem ? "普通门" : DoorInfo.GetDoorNameFromItemId(requireItemId);
             
             // 创建新的 DoorInfo
             DoorInfo doorInfo = new DoorInfo
@@ -133,7 +217,8 @@ namespace AutoMarkKeyDoor
                 SubSceneID = subSceneId,
                 Position = position,
                 NoRequireItem = noRequireItem,
-                RequireItemId = requireItemId
+                RequireItemId = requireItemId,
+                DoorName = doorName
             };
             
             // 添加到缓存

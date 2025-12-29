@@ -14,6 +14,7 @@ namespace AutoMarkKeyDoor
         
         private Harmony _harmony;
         private DoorMarkerManager _markerManager;
+        private DoorFilterUI _filterUI;
         
         /// <summary>
         /// Mod 单例实例
@@ -54,6 +55,20 @@ namespace AutoMarkKeyDoor
                 Debug.LogError(LogPrefix + $"应用补丁失败: {e.Message}\n{e.StackTrace}");
             }
             
+            // 创建筛选UI（必须在门标记管理器之前创建，以便管理器能订阅其事件）
+            try
+            {
+                if (_filterUI == null)
+                {
+                    _filterUI = gameObject.AddComponent<DoorFilterUI>();
+                    Debug.Log(LogPrefix + "DoorFilterUI 组件已创建");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(LogPrefix + $"创建 DoorFilterUI 失败: {e.Message}");
+            }
+            
             // 创建门标记管理器
             try
             {
@@ -61,6 +76,14 @@ namespace AutoMarkKeyDoor
                 {
                     _markerManager = gameObject.AddComponent<DoorMarkerManager>();
                     Debug.Log(LogPrefix + "DoorMarkerManager 组件已创建");
+                    
+                    // 订阅筛选器事件（因为此时 DoorFilterUI 已存在）
+                    if (_filterUI != null)
+                    {
+                        _filterUI.OnFilterChanged += () => {
+                            Debug.Log(LogPrefix + "筛选条件已变更");
+                        };
+                    }
                 }
             }
             catch (System.Exception e)
@@ -92,6 +115,14 @@ namespace AutoMarkKeyDoor
                 Debug.Log(LogPrefix + "DoorMarkerManager 组件已销毁");
             }
             
+            // 销毁筛选UI
+            if (_filterUI != null)
+            {
+                Destroy(_filterUI);
+                _filterUI = null;
+                Debug.Log(LogPrefix + "DoorFilterUI 组件已销毁");
+            }
+            
             // 输出最终的门统计信息
             Debug.Log(LogPrefix + $"Mod 禁用时共记录了 {KeyDoorManager.DoorCount} 个门");
             KeyDoorManager.DebugPrintAllDoors();
@@ -115,6 +146,16 @@ namespace AutoMarkKeyDoor
                 Destroy(_markerManager);
                 _markerManager = null;
             }
+            
+            // 确保筛选UI被销毁
+            if (_filterUI != null)
+            {
+                Destroy(_filterUI);
+                _filterUI = null;
+            }
+            
+            // 清除钥匙缓存
+            KeyItemHelper.ClearCache();
             
             Debug.Log(LogPrefix + "Mod 已销毁");
         }

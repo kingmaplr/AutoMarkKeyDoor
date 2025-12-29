@@ -56,6 +56,12 @@ namespace AutoMarkKeyDoor
             // 订阅场景加载事件
             SceneManager.sceneLoaded += OnSceneLoaded;
             
+            // 订阅筛选器变更事件
+            if (DoorFilterUI.Instance != null)
+            {
+                DoorFilterUI.Instance.OnFilterChanged += OnFilterChanged;
+            }
+            
             Debug.Log(LogPrefix + "事件订阅完成。");
         }
         
@@ -66,6 +72,12 @@ namespace AutoMarkKeyDoor
             // 取消订阅事件
             View.OnActiveViewChanged -= OnActiveViewChanged;
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            
+            // 取消订阅筛选器变更事件
+            if (DoorFilterUI.Instance != null)
+            {
+                DoorFilterUI.Instance.OnFilterChanged -= OnFilterChanged;
+            }
             
             // 清理所有标记
             ClearAllMarkers();
@@ -109,6 +121,18 @@ namespace AutoMarkKeyDoor
             Debug.Log(LogPrefix + $"场景 '{scene.name}' 已加载。清理旧标记...");
             ClearAllMarkers();
             _mapActive = false;
+        }
+        
+        /// <summary>
+        /// 筛选条件变更事件处理
+        /// </summary>
+        private void OnFilterChanged()
+        {
+            if (_mapActive)
+            {
+                Debug.Log(LogPrefix + "筛选条件已变更，重新绘制标记...");
+                DrawAllDoorMarkers();
+            }
         }
         
         #endregion
@@ -160,13 +184,13 @@ namespace AutoMarkKeyDoor
             Debug.Log(LogPrefix + $"当前场景: {currentSceneId}, 子场景: {currentSubSceneId}");
             Debug.Log(LogPrefix + $"已注册门总数: {KeyDoorManager.DoorCount}");
             
-            // 获取所有需要钥匙的门
-            List<DoorInfo> lockedDoors = KeyDoorManager.GetAllLockedDoors();
-            Debug.Log(LogPrefix + $"需要钥匙的门数量: {lockedDoors.Count}");
+            // 根据筛选条件获取要显示的门列表
+            List<DoorInfo> doorsToShow = GetFilteredDoorList();
+            Debug.Log(LogPrefix + $"筛选后门数量: {doorsToShow.Count}");
             
             int markersCreated = 0;
             
-            foreach (DoorInfo door in lockedDoors)
+            foreach (DoorInfo door in doorsToShow)
             {
                 // 检查是否属于当前场景
                 bool sceneMatches = IsSceneMatch(door.SceneID, currentSceneId);
@@ -186,12 +210,27 @@ namespace AutoMarkKeyDoor
         }
         
         /// <summary>
+        /// 根据筛选条件获取门列表
+        /// </summary>
+        private List<DoorInfo> GetFilteredDoorList()
+        {
+            // 如果有筛选UI，使用其筛选条件
+            if (DoorFilterUI.Instance != null)
+            {
+                return DoorFilterUI.Instance.GetFilteredDoors();
+            }
+            
+            // 默认返回所有需要钥匙的门
+            return KeyDoorManager.GetAllLockedDoors();
+        }
+        
+        /// <summary>
         /// 绘制单个门标记
         /// </summary>
         /// <param name="door">门信息</param>
         private void DrawDoorMarker(DoorInfo door)
         {
-            Debug.Log(LogPrefix + $"正在为门 [Key={door.UniqueKey}, ItemId={door.RequireItemId}] 创建标记，位置: {door.Position}");
+            Debug.Log(LogPrefix + $"正在为门 [Key={door.UniqueKey}, Name={door.DoorName}] 创建标记，位置: {door.Position}");
             
             // 创建标记对象
             GameObject markerObject = new GameObject($"DoorMarker_{door.UniqueKey}");
@@ -213,10 +252,12 @@ namespace AutoMarkKeyDoor
             // 获取图标
             Sprite iconToUse = GetDoorIcon();
             
+            // 使用门名称作为标记名称
+            string markerName = !string.IsNullOrEmpty(door.DoorName) ? door.DoorName : $"门#{door.RequireItemId}";
+            
             // 设置标记
             try
             {
-                string markerName = $"Door_{door.RequireItemId}";
                 poi.Setup(iconToUse, markerName, followActiveScene: true);
             }
             catch (Exception e)
@@ -226,8 +267,9 @@ namespace AutoMarkKeyDoor
                 return;
             }
             
-            // 设置标记样式 - 不需要区域半径
-            poi.Color = Color.yellow;  // 使用黄色区分门标记
+            // 根据是否拥有钥匙设置不同颜色
+            bool hasKey = KeyItemHelper.HasKeyForDoor(door);
+            poi.Color = hasKey ? Color.green : Color.yellow;  // 拥有钥匙为绿色，否则为黄色
             poi.IsArea = false;        // 不显示区域圆圈
             poi.AreaRadius = 0f;       // 半径为0
             
@@ -243,7 +285,7 @@ namespace AutoMarkKeyDoor
             // 添加到管理列表
             _markerObjects.Add(markerObject);
             
-            Debug.Log(LogPrefix + $"门标记创建成功 [Key={door.UniqueKey}]");
+            Debug.Log(LogPrefix + $"门标记创建成功 [Key={door.UniqueKey}, Name={markerName}, HasKey={hasKey}]");
         }
         
         /// <summary>
@@ -329,17 +371,7 @@ namespace AutoMarkKeyDoor
         /// </summary>
         private string GetCurrentSceneID()
         {
-            try
-            {
-                var levelInfo = LevelManager.GetCurrentLevelInfo();
-                return levelInfo.sceneName ?? "Unknown";
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning(LogPrefix + $"获取场景ID失败: {e.Message}");
-            }
-            
-            return "Unknown";
+            return SceneHelper.GetCurrentSceneID();
         }
         
         /// <summary>
@@ -347,17 +379,7 @@ namespace AutoMarkKeyDoor
         /// </summary>
         private string GetCurrentSubSceneID()
         {
-            try
-            {
-                var levelInfo = LevelManager.GetCurrentLevelInfo();
-                return levelInfo.activeSubSceneID ?? "Default";
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning(LogPrefix + $"获取子场景ID失败: {e.Message}");
-            }
-            
-            return "Default";
+            return SceneHelper.GetCurrentSubSceneID();
         }
         
         #endregion
