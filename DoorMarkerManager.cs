@@ -229,7 +229,7 @@ namespace AutoMarkKeyDoor
         /// <param name="door">门信息</param>
         private void DrawDoorMarker(DoorInfo door)
         {
-            ModLogger.LogVerbose(Category, $"正在为门 [Key={door.UniqueKey}, Name={door.DoorName}] 创建标记，位置: {door.Position}");
+            ModLogger.Log(Category, $"正在为门 [Key={door.UniqueKey}, Name={door.DoorName}] 创建标记，位置: {door.Position}");
             
             GameObject markerObject = new GameObject($"DoorMarker_{door.UniqueKey}");
             markerObject.transform.position = door.Position;
@@ -279,7 +279,7 @@ namespace AutoMarkKeyDoor
             // 添加到管理列表
             _markerObjects.Add(markerObject);
             
-            ModLogger.LogVerbose(Category, $"门标记创建成功 [Key={door.UniqueKey}, Name={markerName}, HasKey={hasKey}]");
+            ModLogger.Log(Category, $"门标记创建成功 [Key={door.UniqueKey}, Name={markerName}, HasKey={hasKey}, color={poi.Color}]");
         }
         
         /// <summary>

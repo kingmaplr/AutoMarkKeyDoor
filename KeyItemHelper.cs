@@ -124,6 +124,33 @@ namespace AutoMarkKeyDoor
         }
         
         /// <summary>
+        /// 获取当前场景中用到的钥匙类型列表
+        /// 返回包含钥匙ID和对应门名称的字典
+        /// </summary>
+        /// <returns>钥匙ID -> 门名称 的映射</returns>
+        public static Dictionary<int, string> GetRegisteredKeyTypesByCurrentScene()
+        {
+            string sceneId = SceneHelper.GetCurrentSceneID();
+            string subSceneId = SceneHelper.GetCurrentSubSceneID();
+            Dictionary<int, string> result = new Dictionary<int, string>();
+            
+            foreach (var kvp in KeyDoorManager.AllDoors)
+            {
+                DoorInfo doorInfo = kvp.Value;
+                if (!doorInfo.NoRequireItem && doorInfo.RequireItemId > 0 && (sceneId==doorInfo.SceneID || subSceneId == doorInfo.SceneID))
+                {
+                    if (!result.ContainsKey(doorInfo.RequireItemId))
+                    {
+                        result[doorInfo.RequireItemId] = doorInfo.DoorName;
+                    }
+                }
+            }
+            
+            ModLogger.LogVerbose(Category, $"找到 {result.Count} 种不同的钥匙类型");
+            return result;
+        }
+        
+        /// <summary>
         /// 获取所有已注册门中用到的钥匙类型列表
         /// 返回包含钥匙ID和对应门名称的字典
         /// </summary>

@@ -17,10 +17,10 @@ namespace AutoMarkKeyDoor
         /// </summary>
         None,
         
-        /// <summary>
-        /// 标记所有门（包括不需要钥匙的门）
-        /// </summary>
-        AllDoors,
+        // /// <summary>
+        // /// 标记所有门（包括不需要钥匙的门）
+        // /// </summary>
+        // AllDoors,
         
         /// <summary>
         /// 仅标记需要钥匙的门
@@ -201,7 +201,7 @@ namespace AutoMarkKeyDoor
         /// </summary>
         public void RefreshKeyTypeList()
         {
-            _availableKeyTypes = KeyItemHelper.GetAllRegisteredKeyTypes();
+            _availableKeyTypes = KeyItemHelper.GetRegisteredKeyTypesByCurrentScene();
             _statisticsDirty = true; // 标记统计信息需要刷新
             ModLogger.LogVerbose(Category, $"刷新钥匙类型列表，共 {_availableKeyTypes.Count} 种");
         }
@@ -338,14 +338,14 @@ namespace AutoMarkKeyDoor
                 }
             }
             
-            // 标记所有门
-            if (GUILayout.Toggle(CurrentMode == DoorFilterMode.AllDoors, " 标记所有门", _toggleStyle))
-            {
-                if (CurrentMode != DoorFilterMode.AllDoors)
-                {
-                    SetFilterMode(DoorFilterMode.AllDoors);
-                }
-            }
+            // // 标记所有门
+            // if (GUILayout.Toggle(CurrentMode == DoorFilterMode.AllDoors, " 标记所有门", _toggleStyle))
+            // {
+            //     if (CurrentMode != DoorFilterMode.AllDoors)
+            //     {
+            //         SetFilterMode(DoorFilterMode.AllDoors);
+            //     }
+            // }
             
             // 仅标记钥匙门
             if (GUILayout.Toggle(CurrentMode == DoorFilterMode.AllKeyDoors, " 仅标记钥匙门", _toggleStyle))
@@ -532,10 +532,10 @@ namespace AutoMarkKeyDoor
                     // 不显示任何门
                     break;
                     
-                case DoorFilterMode.AllDoors:
-                    // 显示所有门
-                    result = KeyDoorManager.AllDoors.Values.ToList();
-                    break;
+                // case DoorFilterMode.AllDoors:
+                //     // 显示所有门
+                //     result = KeyDoorManager.AllDoors.Values.ToList();
+                //     break;
                     
                 case DoorFilterMode.AllKeyDoors:
                     // 仅显示需要钥匙的门
@@ -576,8 +576,8 @@ namespace AutoMarkKeyDoor
                 case DoorFilterMode.None:
                     return false;
                     
-                case DoorFilterMode.AllDoors:
-                    return true;
+                // case DoorFilterMode.AllDoors:
+                //     return true;
                     
                 case DoorFilterMode.AllKeyDoors:
                     return !door.NoRequireItem;
