@@ -44,7 +44,7 @@ namespace AutoMarkKeyDoor
     /// </summary>
     public class DoorFilterUI : MonoBehaviour
     {
-        private const string LogPrefix = "[AutoMarkKeyDoor][FilterUI] ";
+        private const string Category = "FilterUI";
         
         /// <summary>
         /// 单例实例
@@ -61,8 +61,9 @@ namespace AutoMarkKeyDoor
         /// <summary>
         /// 当前选中的钥匙类型ID（当 Mode 为 ByKeyType 时使用）
         /// 如果为空，表示选中所有类型
+        /// 预估初始容量为16，减少扩容次数
         /// </summary>
-        public HashSet<int> SelectedKeyTypeIds { get; private set; } = new HashSet<int>();
+        public HashSet<int> SelectedKeyTypeIds { get; private set; } = new HashSet<int>(16);
         
         /// <summary>
         /// 筛选条件变更事件
@@ -78,7 +79,8 @@ namespace AutoMarkKeyDoor
         private Vector2 _keyListScrollPos = Vector2.zero;
         
         // 可用的钥匙类型列表（从已注册的门中获取）
-        private Dictionary<int, string> _availableKeyTypes = new Dictionary<int, string>();
+        // 预估初始容量为16，减少扩容次数
+        private Dictionary<int, string> _availableKeyTypes = new Dictionary<int, string>(16);
         
         // 统计信息缓存（避免每帧调用）
         private int _cachedTotalDoors = 0;
@@ -102,23 +104,23 @@ namespace AutoMarkKeyDoor
         {
             if (Instance != null && Instance != this)
             {
-                Debug.LogWarning(LogPrefix + "检测到重复的 DoorFilterUI 实例，已销毁。");
+                ModLogger.LogWarning(Category, "检测到重复的 DoorFilterUI 实例，已销毁。");
                 Destroy(this);
                 return;
             }
             Instance = this;
-            Debug.Log(LogPrefix + "实例已初始化。");
+            ModLogger.Log(Category, "实例已初始化。");
         }
         
         private void OnEnable()
         {
-            Debug.Log(LogPrefix + "已启用。订阅事件...");
+            ModLogger.Log(Category, "已启用。订阅事件...");
             View.OnActiveViewChanged += OnActiveViewChanged;
         }
         
         private void OnDisable()
         {
-            Debug.Log(LogPrefix + "已禁用。取消订阅事件...");
+            ModLogger.Log(Category, "已禁用。取消订阅事件...");
             View.OnActiveViewChanged -= OnActiveViewChanged;
             _showUI = false;
         }
@@ -128,7 +130,7 @@ namespace AutoMarkKeyDoor
             if (Instance == this)
             {
                 Instance = null;
-                Debug.Log(LogPrefix + "实例已销毁。");
+                ModLogger.Log(Category, "实例已销毁。");
             }
         }
         
@@ -165,7 +167,7 @@ namespace AutoMarkKeyDoor
         /// </summary>
         public void ShowUI()
         {
-            Debug.Log(LogPrefix + "显示筛选UI");
+            ModLogger.Log(Category, "显示筛选UI");
             _showUI = true;
             RefreshKeyTypeList();
         }
@@ -175,7 +177,7 @@ namespace AutoMarkKeyDoor
         /// </summary>
         public void HideUI()
         {
-            Debug.Log(LogPrefix + "隐藏筛选UI");
+            ModLogger.Log(Category, "隐藏筛选UI");
             _showUI = false;
         }
         
@@ -201,7 +203,7 @@ namespace AutoMarkKeyDoor
         {
             _availableKeyTypes = KeyItemHelper.GetAllRegisteredKeyTypes();
             _statisticsDirty = true; // 标记统计信息需要刷新
-            LogDebug($"刷新钥匙类型列表，共 {_availableKeyTypes.Count} 种");
+            ModLogger.LogVerbose(Category, $"刷新钥匙类型列表，共 {_availableKeyTypes.Count} 种");
         }
         
         /// <summary>
@@ -478,7 +480,7 @@ namespace AutoMarkKeyDoor
         {
             if (CurrentMode != mode)
             {
-                Debug.Log(LogPrefix + $"切换筛选模式: {CurrentMode} -> {mode}");
+                ModLogger.Log(Category, $"切换筛选模式: {CurrentMode} -> {mode}");
                 CurrentMode = mode;
                 NotifyFilterChanged();
             }
@@ -512,7 +514,7 @@ namespace AutoMarkKeyDoor
         private void NotifyFilterChanged()
         {
             _statisticsDirty = true; // 筛选变更时刷新统计信息
-            LogDebug($"筛选条件已更改，当前模式: {CurrentMode}");
+            ModLogger.LogVerbose(Category, $"筛选条件已更改，当前模式: {CurrentMode}");
             OnFilterChanged?.Invoke();
         }
         
@@ -558,7 +560,7 @@ namespace AutoMarkKeyDoor
                     break;
             }
             
-            LogDebug($"筛选结果: {result.Count} 个门 (模式: {CurrentMode})");
+            ModLogger.LogVerbose(Category, $"筛选结果: {result.Count} 个门 (模式: {CurrentMode})");
             return result;
         }
         
@@ -589,28 +591,6 @@ namespace AutoMarkKeyDoor
                 default:
                     return false;
             }
-        }
-        
-        #endregion
-        
-        #region 日志辅助
-        
-        /// <summary>
-        /// 调试日志输出（仅在 DEBUG 模式下生效）
-        /// </summary>
-        [System.Diagnostics.Conditional("DEBUG")]
-        private void LogDebug(string message)
-        {
-            Debug.Log(LogPrefix + message);
-        }
-        
-        /// <summary>
-        /// 警告日志输出
-        /// </summary>
-        [System.Diagnostics.Conditional("DEBUG")]
-        private void LogWarning(string message)
-        {
-            Debug.LogWarning(LogPrefix + message);
         }
         
         #endregion

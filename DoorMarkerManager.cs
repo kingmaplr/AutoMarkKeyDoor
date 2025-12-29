@@ -15,7 +15,7 @@ namespace AutoMarkKeyDoor
     /// </summary>
     public class DoorMarkerManager : MonoBehaviour
     {
-        private const string LogPrefix = "[AutoMarkKeyDoor][MarkerManager] ";
+        private const string Category = "MarkerManager";
         
         /// <summary>
         /// 单例实例
@@ -24,8 +24,9 @@ namespace AutoMarkKeyDoor
         
         /// <summary>
         /// 当前已创建的标记对象列表
+        /// 预估初始容量为32，减少扩容次数
         /// </summary>
-        private HashSet<GameObject> _markerObjects = new HashSet<GameObject>();
+        private HashSet<GameObject> _markerObjects = new HashSet<GameObject>(32);
         
         /// <summary>
         /// 地图是否处于打开状态
@@ -38,17 +39,17 @@ namespace AutoMarkKeyDoor
         {
             if (Instance != null && Instance != this)
             {
-                Debug.LogWarning(LogPrefix + "检测到重复的 DoorMarkerManager 实例，已销毁。");
+                ModLogger.LogWarning(Category, "检测到重复的 DoorMarkerManager 实例，已销毁。");
                 Destroy(this);
                 return;
             }
             Instance = this;
-            Debug.Log(LogPrefix + "实例已初始化。");
+            ModLogger.Log(Category, "实例已初始化。");
         }
         
         private void OnEnable()
         {
-            Debug.Log(LogPrefix + "已启用。订阅事件...");
+            ModLogger.Log(Category, "已启用。订阅事件...");
             
             // 订阅视图切换事件（地图打开/关闭）
             View.OnActiveViewChanged += OnActiveViewChanged;
@@ -62,12 +63,12 @@ namespace AutoMarkKeyDoor
                 DoorFilterUI.Instance.OnFilterChanged += OnFilterChanged;
             }
             
-            Debug.Log(LogPrefix + "事件订阅完成。");
+            ModLogger.Log(Category, "事件订阅完成。");
         }
         
         private void OnDisable()
         {
-            Debug.Log(LogPrefix + "已禁用。取消订阅事件并清理...");
+            ModLogger.Log(Category, "已禁用。取消订阅事件并清理...");
             
             // 取消订阅事件
             View.OnActiveViewChanged -= OnActiveViewChanged;
@@ -82,7 +83,7 @@ namespace AutoMarkKeyDoor
             // 清理所有标记
             ClearAllMarkers();
             
-            Debug.Log(LogPrefix + "事件已取消订阅，标记已清理。");
+            ModLogger.Log(Category, "事件已取消订阅，标记已清理。");
         }
         
         private void OnDestroy()
@@ -90,7 +91,7 @@ namespace AutoMarkKeyDoor
             if (Instance == this)
             {
                 Instance = null;
-                Debug.Log(LogPrefix + "实例已销毁。");
+                ModLogger.Log(Category, "实例已销毁。");
             }
         }
         
@@ -118,7 +119,7 @@ namespace AutoMarkKeyDoor
         /// </summary>
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            Debug.Log(LogPrefix + $"场景 '{scene.name}' 已加载。清理旧标记...");
+            ModLogger.Log(Category, $"场景 '{scene.name}' 已加载。清理旧标记...");
             ClearAllMarkers();
             _mapActive = false;
         }
@@ -130,7 +131,7 @@ namespace AutoMarkKeyDoor
         {
             if (_mapActive)
             {
-                Debug.Log(LogPrefix + "筛选条件已变更，重新绘制标记...");
+                ModLogger.Log(Category, "筛选条件已变更，重新绘制标记...");
                 DrawAllDoorMarkers();
             }
         }
@@ -146,11 +147,11 @@ namespace AutoMarkKeyDoor
         {
             if (_mapActive)
             {
-                Debug.Log(LogPrefix + "地图已经打开，跳过重复绘制。");
+                ModLogger.LogVerbose(Category, "地图已经打开，跳过重复绘制。");
                 return;
             }
             
-            Debug.Log(LogPrefix + "地图已打开，开始绘制门标记...");
+            ModLogger.Log(Category, "地图已打开，开始绘制门标记...");
             _mapActive = true;
             
             DrawAllDoorMarkers();
@@ -163,7 +164,7 @@ namespace AutoMarkKeyDoor
         {
             if (_mapActive)
             {
-                Debug.Log(LogPrefix + "地图已关闭，清理门标记...");
+                ModLogger.Log(Category, "地图已关闭，清理门标记...");
                 _mapActive = false;
                 ClearAllMarkers();
             }
@@ -181,12 +182,12 @@ namespace AutoMarkKeyDoor
             string currentSceneId = GetCurrentSceneID();
             string currentSubSceneId = GetCurrentSubSceneID();
             
-            Debug.Log(LogPrefix + $"当前场景: {currentSceneId}, 子场景: {currentSubSceneId}");
-            Debug.Log(LogPrefix + $"已注册门总数: {KeyDoorManager.DoorCount}");
+            ModLogger.LogVerbose(Category, $"当前场景: {currentSceneId}, 子场景: {currentSubSceneId}");
+            ModLogger.LogVerbose(Category, $"已注册门总数: {KeyDoorManager.DoorCount}");
             
             // 根据筛选条件获取要显示的门列表
             List<DoorInfo> doorsToShow = GetFilteredDoorList();
-            Debug.Log(LogPrefix + $"筛选后门数量: {doorsToShow.Count}");
+            ModLogger.LogVerbose(Category, $"筛选后门数量: {doorsToShow.Count}");
             
             int markersCreated = 0;
             
@@ -202,11 +203,11 @@ namespace AutoMarkKeyDoor
                 }
                 else
                 {
-                    Debug.Log(LogPrefix + $"跳过门 [Key={door.UniqueKey}]: 场景不匹配 (门场景={door.SceneID}, 当前={currentSceneId})");
+                    ModLogger.LogVerbose(Category, $"跳过门 [Key={door.UniqueKey}]: 场景不匹配 (门场景={door.SceneID}, 当前={currentSceneId})");
                 }
             }
             
-            Debug.Log(LogPrefix + $"绘制完成，共创建 {markersCreated} 个标记。");
+            ModLogger.Log(Category, $"绘制完成，共创建 {markersCreated} 个标记。");
         }
         
         /// <summary>
@@ -230,7 +231,7 @@ namespace AutoMarkKeyDoor
         /// <param name="door">门信息</param>
         private void DrawDoorMarker(DoorInfo door)
         {
-            Debug.Log(LogPrefix + $"正在为门 [Key={door.UniqueKey}, Name={door.DoorName}] 创建标记，位置: {door.Position}");
+            ModLogger.LogVerbose(Category, $"正在为门 [Key={door.UniqueKey}, Name={door.DoorName}] 创建标记，位置: {door.Position}");
             
             // 创建标记对象
             GameObject markerObject = new GameObject($"DoorMarker_{door.UniqueKey}");
@@ -244,7 +245,7 @@ namespace AutoMarkKeyDoor
             }
             catch (Exception e)
             {
-                Debug.LogError(LogPrefix + $"AddComponent<SimplePointOfInterest> 失败: {e.Message}");
+                ModLogger.LogError(Category, $"AddComponent<SimplePointOfInterest> 失败: {e.Message}");
                 Destroy(markerObject);
                 return;
             }
@@ -262,7 +263,7 @@ namespace AutoMarkKeyDoor
             }
             catch (Exception e)
             {
-                Debug.LogError(LogPrefix + $"poi.Setup 失败: {e.Message}");
+                ModLogger.LogError(Category, $"poi.Setup 失败: {e.Message}");
                 Destroy(markerObject);
                 return;
             }
@@ -285,7 +286,7 @@ namespace AutoMarkKeyDoor
             // 添加到管理列表
             _markerObjects.Add(markerObject);
             
-            Debug.Log(LogPrefix + $"门标记创建成功 [Key={door.UniqueKey}, Name={markerName}, HasKey={hasKey}]");
+            ModLogger.LogVerbose(Category, $"门标记创建成功 [Key={door.UniqueKey}, Name={markerName}, HasKey={hasKey}]");
         }
         
         /// <summary>
@@ -293,7 +294,7 @@ namespace AutoMarkKeyDoor
         /// </summary>
         private void ClearAllMarkers()
         {
-            Debug.Log(LogPrefix + $"正在清理 {_markerObjects.Count} 个标记...");
+            ModLogger.LogVerbose(Category, $"正在清理 {_markerObjects.Count} 个标记...");
             
             foreach (GameObject marker in _markerObjects)
             {
@@ -305,7 +306,7 @@ namespace AutoMarkKeyDoor
             }
             
             _markerObjects.Clear();
-            Debug.Log(LogPrefix + "所有标记已清理。");
+            ModLogger.LogVerbose(Category, "所有标记已清理。");
         }
         
         #endregion
@@ -340,11 +341,11 @@ namespace AutoMarkKeyDoor
                     return allIcons[0];
                 }
                 
-                Debug.LogWarning(LogPrefix + "MapMarkerManager.Icons 为空，无法获取图标。");
+                ModLogger.LogWarning(Category, "MapMarkerManager.Icons 为空，无法获取图标。");
             }
             catch (Exception e)
             {
-                Debug.LogError(LogPrefix + $"获取图标失败: {e.Message}");
+                ModLogger.LogError(Category, $"获取图标失败: {e.Message}");
             }
             
             return null;
@@ -353,34 +354,18 @@ namespace AutoMarkKeyDoor
         /// <summary>
         /// 检查场景是否匹配
         /// </summary>
-        private bool IsSceneMatch(string doorSceneId, string currentSceneId)
-        {
-            if (string.IsNullOrEmpty(doorSceneId) || string.IsNullOrEmpty(currentSceneId))
-            {
-                return false;
-            }
-            
-            // 精确匹配或包含匹配（处理场景ID格式不一致的情况）
-            return doorSceneId == currentSceneId ||
-                   doorSceneId.Contains(currentSceneId) ||
-                   currentSceneId.Contains(doorSceneId);
-        }
+        private bool IsSceneMatch(string doorSceneId, string currentSceneId) 
+            => SceneHelper.IsSceneMatch(doorSceneId, currentSceneId);
         
         /// <summary>
         /// 获取当前场景ID
         /// </summary>
-        private string GetCurrentSceneID()
-        {
-            return SceneHelper.GetCurrentSceneID();
-        }
+        private string GetCurrentSceneID() => SceneHelper.GetCurrentSceneID();
         
         /// <summary>
         /// 获取当前子场景ID
         /// </summary>
-        private string GetCurrentSubSceneID()
-        {
-            return SceneHelper.GetCurrentSubSceneID();
-        }
+        private string GetCurrentSubSceneID() => SceneHelper.GetCurrentSubSceneID();
         
         #endregion
     }

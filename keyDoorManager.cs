@@ -11,6 +11,25 @@ namespace AutoMarkKeyDoor
     /// </summary>
     public class DoorInfo
     {
+        #region 预编译正则表达式
+        
+        /// <summary>
+        /// 匹配 "xxx钥匙卡" 格式
+        /// </summary>
+        private static readonly Regex _regexCard = new Regex(@"^(.+?)钥匙卡$", RegexOptions.Compiled);
+        
+        /// <summary>
+        /// 匹配 "xx钥匙-n" 格式（带数字编号）
+        /// </summary>
+        private static readonly Regex _regexWithNumber = new Regex(@"^(.+?)钥匙[-－]\d+$", RegexOptions.Compiled);
+        
+        /// <summary>
+        /// 匹配 "xx钥匙" 格式（不带编号）
+        /// </summary>
+        private static readonly Regex _regexSimple = new Regex(@"^(.+?)钥匙$", RegexOptions.Compiled);
+        
+        #endregion
+        
         /// <summary>
         /// 门的唯一标识符（基于位置计算）
         /// </summary>
@@ -78,26 +97,24 @@ namespace AutoMarkKeyDoor
                 return "未知";
             }
             
-            // 模式1: "xxx钥匙卡" -> "xxx"
-            // 模式2: "xx钥匙-n" -> "xx" (n为数字编号)
-            // 模式3: "xx钥匙" -> "xx"
+            // 使用预编译的正则表达式进行匹配，按优先级尝试：
+            // 1. "xxx钥匙卡" -> "xxx"
+            // 2. "xx钥匙-n" -> "xx" (n为数字编号)
+            // 3. "xx钥匙" -> "xx"
             
-            // 先尝试匹配 "xxx钥匙卡"
-            var matchCard = Regex.Match(keyItemName, @"^(.+?)钥匙卡$");
+            var matchCard = _regexCard.Match(keyItemName);
             if (matchCard.Success)
             {
                 return matchCard.Groups[1].Value;
             }
             
-            // 尝试匹配 "xx钥匙-n" (带数字编号)
-            var matchWithNumber = Regex.Match(keyItemName, @"^(.+?)钥匙[-－]\d+$");
+            var matchWithNumber = _regexWithNumber.Match(keyItemName);
             if (matchWithNumber.Success)
             {
                 return matchWithNumber.Groups[1].Value;
             }
             
-            // 尝试匹配 "xx钥匙" (不带编号)
-            var matchSimple = Regex.Match(keyItemName, @"^(.+?)钥匙$");
+            var matchSimple = _regexSimple.Match(keyItemName);
             if (matchSimple.Success)
             {
                 return matchSimple.Groups[1].Value;
@@ -128,7 +145,7 @@ namespace AutoMarkKeyDoor
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning($"[AutoMarkKeyDoor] 获取物品名称失败, ItemId={itemId}: {e.Message}");
+                ModLogger.LogWarning("DoorInfo", $"获取物品名称失败, ItemId={itemId}: {e.Message}");
             }
             
             return $"钥匙#{itemId}";
@@ -145,7 +162,7 @@ namespace AutoMarkKeyDoor
     /// </summary>
     public static class KeyDoorManager
     {
-        private const string LogPrefix = "[AutoMarkKeyDoor][KeyDoorManager] ";
+        private const string Category = "KeyDoorManager";
         
         /// <summary>
         /// 缓存所有已注册的门信息
@@ -175,7 +192,7 @@ namespace AutoMarkKeyDoor
         {
             if (door == null)
             {
-                Debug.LogWarning(LogPrefix + "尝试注册一个 null 的 Door 对象");
+                ModLogger.LogWarning(Category, "尝试注册一个 null 的 Door 对象");
                 return null;
             }
             
@@ -202,7 +219,7 @@ namespace AutoMarkKeyDoor
                 existingInfo.SubSceneID = subSceneId;
                 existingInfo.DoorName = noRequireItem ? "普通门" : DoorInfo.GetDoorNameFromItemId(requireItemId);
                 
-                Debug.Log(LogPrefix + $"门已存在，更新信息: {existingInfo}");
+                ModLogger.LogVerbose(Category, $"门已存在，更新信息: {existingInfo}");
                 return existingInfo;
             }
             
@@ -224,7 +241,7 @@ namespace AutoMarkKeyDoor
             // 添加到缓存
             _doorCache[uniqueKey] = doorInfo;
             
-            Debug.Log(LogPrefix + $"成功注册门: {doorInfo}");
+            ModLogger.Log(Category, $"成功注册门: {doorInfo}");
             
             return doorInfo;
         }
@@ -281,7 +298,7 @@ namespace AutoMarkKeyDoor
                 }
             }
             
-            Debug.Log(LogPrefix + $"查找道具ID={itemId}对应的门，找到 {result.Count} 个");
+            ModLogger.LogVerbose(Category, $"查找道具ID={itemId}对应的门，找到 {result.Count} 个");
             return result;
         }
         
@@ -302,7 +319,7 @@ namespace AutoMarkKeyDoor
                 }
             }
             
-            Debug.Log(LogPrefix + $"查找所有需要钥匙的门，找到 {result.Count} 个");
+            ModLogger.LogVerbose(Category, $"查找所有需要钥匙的门，找到 {result.Count} 个");
             return result;
         }
         
@@ -356,22 +373,23 @@ namespace AutoMarkKeyDoor
             int count = _doorCache.Count;
             _doorCache.Clear();
             
-            Debug.Log(LogPrefix + $"已清空所有门缓存，共清理 {count} 个门");
+            ModLogger.Log(Category, $"已清空所有门缓存，共清理 {count} 个门");
         }
         
         /// <summary>
         /// 输出当前所有门的调试信息
         /// </summary>
+        [System.Diagnostics.Conditional("DEBUG")]
         public static void DebugPrintAllDoors()
         {
-            Debug.Log(LogPrefix + $"======= 当前已注册的门列表 (共 {_doorCache.Count} 个) =======");
+            ModLogger.Log(Category, $"======= 当前已注册的门列表 (共 {_doorCache.Count} 个) =======");
             
             int lockedCount = 0;
             int unlockedCount = 0;
             
             foreach (var kvp in _doorCache)
             {
-                Debug.Log(LogPrefix + $"  {kvp.Value}");
+                ModLogger.Log(Category, $"  {kvp.Value}");
                 
                 if (kvp.Value.NoRequireItem)
                     unlockedCount++;
@@ -379,8 +397,8 @@ namespace AutoMarkKeyDoor
                     lockedCount++;
             }
             
-            Debug.Log(LogPrefix + $"统计: 需要钥匙={lockedCount}, 无需钥匙={unlockedCount}");
-            Debug.Log(LogPrefix + "======= 门列表结束 =======");
+            ModLogger.Log(Category, $"统计: 需要钥匙={lockedCount}, 无需钥匙={unlockedCount}");
+            ModLogger.Log(Category, "======= 门列表结束 =======");
         }
     }
 }

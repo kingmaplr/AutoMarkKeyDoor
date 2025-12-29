@@ -9,7 +9,7 @@ namespace AutoMarkKeyDoor
     /// </summary>
     public static class SceneHelper
     {
-        private const string LogPrefix = "[AutoMarkKeyDoor][SceneHelper] ";
+        private const string Category = "SceneHelper";
         
         /// <summary>
         /// 获取当前场景ID
@@ -24,7 +24,7 @@ namespace AutoMarkKeyDoor
             }
             catch (Exception e)
             {
-                LogWarning($"获取场景ID失败: {e.Message}");
+                ModLogger.LogWarning(Category, $"获取场景ID失败: {e.Message}");
             }
             
             return "Unknown";
@@ -43,7 +43,7 @@ namespace AutoMarkKeyDoor
             }
             catch (Exception e)
             {
-                LogWarning($"获取子场景ID失败: {e.Message}");
+                ModLogger.LogWarning(Category, $"获取子场景ID失败: {e.Message}");
             }
             
             return "Default";
@@ -91,26 +91,6 @@ namespace AutoMarkKeyDoor
             return $"Scene={sceneId}, SubScene={subSceneId}";
         }
         
-        #region 日志辅助
-        
-        /// <summary>
-        /// 调试日志输出（仅在 DEBUG 模式下生效）
-        /// </summary>
-        [System.Diagnostics.Conditional("DEBUG")]
-        private static void LogDebug(string message)
-        {
-            Debug.Log(LogPrefix + message);
-        }
-        
-        /// <summary>
-        /// 警告日志输出（仅在 DEBUG 模式下生效）
-        /// </summary>
-        [System.Diagnostics.Conditional("DEBUG")]
-        private static void LogWarning(string message)
-        {
-            Debug.LogWarning(LogPrefix + message);
-        }
-        
-        #endregion
+        // 日志辅助方法已迁移至 ModLogger 统一管理
     }
 }

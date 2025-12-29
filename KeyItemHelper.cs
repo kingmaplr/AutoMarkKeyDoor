@@ -12,12 +12,13 @@ namespace AutoMarkKeyDoor
     /// </summary>
     public static class KeyItemHelper
     {
-        private const string LogPrefix = "[AutoMarkKeyDoor][KeyItemHelper] ";
+        private const string Category = "KeyItemHelper";
         
         /// <summary>
         /// 缓存钥匙ID到门名称的映射
+        /// 预估初始容量为16，减少扩容次数
         /// </summary>
-        private static Dictionary<int, string> _keyIdToDoorNameCache = new Dictionary<int, string>();
+        private static Dictionary<int, string> _keyIdToDoorNameCache = new Dictionary<int, string>(16);
         
         /// <summary>
         /// 获取所有可能的钥匙物品ID列表
@@ -31,7 +32,7 @@ namespace AutoMarkKeyDoor
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning(LogPrefix + $"获取所有钥匙ID列表失败: {e.Message}");
+                ModLogger.LogWarning(Category, $"获取所有钥匙ID列表失败: {e.Message}");
                 return new List<int>();
             }
         }
@@ -49,7 +50,7 @@ namespace AutoMarkKeyDoor
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning(LogPrefix + $"检查钥匙激活状态失败, ItemId={keyItemId}: {e.Message}");
+                ModLogger.LogWarning(Category, $"检查钥匙激活状态失败, ItemId={keyItemId}: {e.Message}");
                 return false;
             }
         }
@@ -73,11 +74,11 @@ namespace AutoMarkKeyDoor
                     }
                 }
                 
-                Debug.Log(LogPrefix + $"找到 {result.Count} 个已激活的钥匙");
+                ModLogger.LogVerbose(Category, $"找到 {result.Count} 个已激活的钥匙");
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning(LogPrefix + $"获取已激活钥匙列表失败: {e.Message}");
+                ModLogger.LogWarning(Category, $"获取已激活钥匙列表失败: {e.Message}");
             }
             
             return result;
@@ -97,7 +98,7 @@ namespace AutoMarkKeyDoor
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning(LogPrefix + $"获取钥匙名称失败, ItemId={keyItemId}: {e.Message}");
+                ModLogger.LogWarning(Category, $"获取钥匙名称失败, ItemId={keyItemId}: {e.Message}");
             }
             
             return $"钥匙#{keyItemId}";
@@ -145,7 +146,7 @@ namespace AutoMarkKeyDoor
                 }
             }
             
-            Debug.Log(LogPrefix + $"找到 {result.Count} 种不同的钥匙类型");
+            ModLogger.LogVerbose(Category, $"找到 {result.Count} 种不同的钥匙类型");
             return result;
         }
         
@@ -188,7 +189,7 @@ namespace AutoMarkKeyDoor
                 }
             }
             
-            Debug.Log(LogPrefix + $"找到 {result.Count} 个玩家已拥有钥匙的门");
+            ModLogger.LogVerbose(Category, $"找到 {result.Count} 个玩家已拥有钥匙的门");
             return result;
         }
         
@@ -198,40 +199,41 @@ namespace AutoMarkKeyDoor
         public static void ClearCache()
         {
             _keyIdToDoorNameCache.Clear();
-            Debug.Log(LogPrefix + "已清除钥匙名称缓存");
+            ModLogger.Log(Category, "已清除钥匙名称缓存");
         }
         
         /// <summary>
         /// 输出调试信息
         /// </summary>
+        [System.Diagnostics.Conditional("DEBUG")]
         public static void DebugPrintKeyInfo()
         {
-            Debug.Log(LogPrefix + "======= 钥匙信息调试输出 =======");
+            ModLogger.Log(Category, "======= 钥匙信息调试输出 =======");
             
             // 输出所有可能的钥匙
             List<int> allKeys = GetAllPossibleKeyIds();
-            Debug.Log(LogPrefix + $"游戏中共有 {allKeys.Count} 种钥匙");
+            ModLogger.Log(Category, $"游戏中共有 {allKeys.Count} 种钥匙");
             
             // 输出已激活的钥匙
             List<int> activatedKeys = GetAllActivatedKeyIds();
-            Debug.Log(LogPrefix + $"玩家已激活 {activatedKeys.Count} 种钥匙:");
+            ModLogger.Log(Category, $"玩家已激活 {activatedKeys.Count} 种钥匙:");
             foreach (int keyId in activatedKeys)
             {
                 string displayName = GetKeyDisplayName(keyId);
                 string doorName = GetDoorNameByKeyId(keyId);
-                Debug.Log(LogPrefix + $"  - ID={keyId}, 名称={displayName}, 门名称={doorName}");
+                ModLogger.Log(Category, $"  - ID={keyId}, 名称={displayName}, 门名称={doorName}");
             }
             
             // 输出已注册门中用到的钥匙类型
             var registeredKeyTypes = GetAllRegisteredKeyTypes();
-            Debug.Log(LogPrefix + $"已注册门中使用了 {registeredKeyTypes.Count} 种钥匙:");
+            ModLogger.Log(Category, $"已注册门中使用了 {registeredKeyTypes.Count} 种钥匙:");
             foreach (var kvp in registeredKeyTypes)
             {
                 bool owned = IsKeyActivated(kvp.Key);
-                Debug.Log(LogPrefix + $"  - ID={kvp.Key}, 门名称={kvp.Value}, 已拥有={owned}");
+                ModLogger.Log(Category, $"  - ID={kvp.Key}, 门名称={kvp.Value}, 已拥有={owned}");
             }
             
-            Debug.Log(LogPrefix + "======= 钥匙信息输出结束 =======");
+            ModLogger.Log(Category, "======= 钥匙信息输出结束 =======");
         }
     }
 }

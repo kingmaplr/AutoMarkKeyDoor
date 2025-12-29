@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿﻿using UnityEngine;
 using HarmonyLib;
 
 namespace AutoMarkKeyDoor
@@ -9,7 +9,7 @@ namespace AutoMarkKeyDoor
     /// </summary>
     public class ModBehaviour : Duckov.Modding.ModBehaviour
     {
-        private const string LogPrefix = "[AutoMarkKeyDoor] ";
+        private const string Category = "Main";
         private const string HarmonyId = "com.automarkeydoor.mod";
         
         private Harmony _harmony;
@@ -23,12 +23,12 @@ namespace AutoMarkKeyDoor
         
         void Awake()
         {
-            Debug.Log(LogPrefix + "Mod 初始化中...");
+            ModLogger.Log(Category, "Mod 初始化中...");
             
             // 单例设置
             if (Instance != null && Instance != this)
             {
-                Debug.LogWarning(LogPrefix + "已存在 ModBehaviour 实例，销毁当前实例");
+                ModLogger.LogWarning(Category, "已存在 ModBehaviour 实例，销毁当前实例");
                 Destroy(this.gameObject);
                 return;
             }
@@ -37,22 +37,22 @@ namespace AutoMarkKeyDoor
             // 创建 Harmony 实例
             _harmony = new Harmony(HarmonyId);
             
-            Debug.Log(LogPrefix + "Mod 初始化完成");
+            ModLogger.Log(Category, "Mod 初始化完成");
         }
         
         void OnEnable()
         {
-            Debug.Log(LogPrefix + "Mod 已启用，正在应用补丁...");
+            ModLogger.Log(Category, "Mod 已启用，正在应用补丁...");
             
             try
             {
                 // 使用 PatchAll 自动应用所有带 HarmonyPatch 特性的补丁
                 _harmony.PatchAll(typeof(ModBehaviour).Assembly);
-                Debug.Log(LogPrefix + "Harmony 补丁应用成功");
+                ModLogger.Log(Category, "Harmony 补丁应用成功");
             }
             catch (System.Exception e)
             {
-                Debug.LogError(LogPrefix + $"应用补丁失败: {e.Message}\n{e.StackTrace}");
+                ModLogger.LogError(Category, $"应用补丁失败: {e.Message}\n{e.StackTrace}");
             }
             
             // 创建筛选UI（必须在门标记管理器之前创建，以便管理器能订阅其事件）
@@ -61,12 +61,12 @@ namespace AutoMarkKeyDoor
                 if (_filterUI == null)
                 {
                     _filterUI = gameObject.AddComponent<DoorFilterUI>();
-                    Debug.Log(LogPrefix + "DoorFilterUI 组件已创建");
+                    ModLogger.Log(Category, "DoorFilterUI 组件已创建");
                 }
             }
             catch (System.Exception e)
             {
-                Debug.LogError(LogPrefix + $"创建 DoorFilterUI 失败: {e.Message}");
+                ModLogger.LogError(Category, $"创建 DoorFilterUI 失败: {e.Message}");
             }
             
             // 创建门标记管理器
@@ -75,36 +75,28 @@ namespace AutoMarkKeyDoor
                 if (_markerManager == null)
                 {
                     _markerManager = gameObject.AddComponent<DoorMarkerManager>();
-                    Debug.Log(LogPrefix + "DoorMarkerManager 组件已创建");
-                    
-                    // 订阅筛选器事件（因为此时 DoorFilterUI 已存在）
-                    if (_filterUI != null)
-                    {
-                        _filterUI.OnFilterChanged += () => {
-                            Debug.Log(LogPrefix + "筛选条件已变更");
-                        };
-                    }
+                    ModLogger.Log(Category, "DoorMarkerManager 组件已创建");
                 }
             }
             catch (System.Exception e)
             {
-                Debug.LogError(LogPrefix + $"创建 DoorMarkerManager 失败: {e.Message}");
+                ModLogger.LogError(Category, $"创建 DoorMarkerManager 失败: {e.Message}");
             }
         }
         
         void OnDisable()
         {
-            Debug.Log(LogPrefix + "Mod 已禁用，正在卸载补丁...");
+            ModLogger.Log(Category, "Mod 已禁用，正在卸载补丁...");
             
             try
             {
                 // 卸载所有补丁
                 _harmony?.UnpatchAll(HarmonyId);
-                Debug.Log(LogPrefix + "Harmony 补丁卸载成功");
+                ModLogger.Log(Category, "Harmony 补丁卸载成功");
             }
             catch (System.Exception e)
             {
-                Debug.LogError(LogPrefix + $"卸载补丁失败: {e.Message}");
+                ModLogger.LogError(Category, $"卸载补丁失败: {e.Message}");
             }
             
             // 销毁门标记管理器
@@ -112,7 +104,7 @@ namespace AutoMarkKeyDoor
             {
                 Destroy(_markerManager);
                 _markerManager = null;
-                Debug.Log(LogPrefix + "DoorMarkerManager 组件已销毁");
+                ModLogger.Log(Category, "DoorMarkerManager 组件已销毁");
             }
             
             // 销毁筛选UI
@@ -120,17 +112,17 @@ namespace AutoMarkKeyDoor
             {
                 Destroy(_filterUI);
                 _filterUI = null;
-                Debug.Log(LogPrefix + "DoorFilterUI 组件已销毁");
+                ModLogger.Log(Category, "DoorFilterUI 组件已销毁");
             }
             
             // 输出最终的门统计信息
-            Debug.Log(LogPrefix + $"Mod 禁用时共记录了 {KeyDoorManager.DoorCount} 个门");
+            ModLogger.Log(Category, $"Mod 禁用时共记录了 {KeyDoorManager.DoorCount} 个门");
             KeyDoorManager.DebugPrintAllDoors();
         }
         
         void OnDestroy()
         {
-            Debug.Log(LogPrefix + "Mod 正在销毁...");
+            ModLogger.Log(Category, "Mod 正在销毁...");
             
             if (Instance == this)
             {
@@ -157,7 +149,7 @@ namespace AutoMarkKeyDoor
             // 清除钥匙缓存
             KeyItemHelper.ClearCache();
             
-            Debug.Log(LogPrefix + "Mod 已销毁");
+            ModLogger.Log(Category, "Mod 已销毁");
         }
     }
 }
