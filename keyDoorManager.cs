@@ -4,7 +4,7 @@ using UnityEngine;
 namespace AutoMarkKeyDoor
 {
     /// <summary>
-    /// 门信息数据结构类，存储门的关键信息（纯数据，不缓存对象实例）
+    /// 门信息数据结构类，存储门的关键信息
     /// 门对象是场景预制体，会随场景加载/卸载销毁，此数据结构支持跨场景使用
     /// </summary>
     public class DoorInfo
@@ -62,7 +62,6 @@ namespace AutoMarkKeyDoor
     
     /// <summary>
     /// 门信息管理器 - 静态类，管理所有已注册的门信息
-    /// 使用纯数据缓存，支持跨场景使用
     /// </summary>
     public static class KeyDoorManager
     {
@@ -88,7 +87,7 @@ namespace AutoMarkKeyDoor
         /// <summary>
         /// 从 Door 对象提取信息并注册到缓存
         /// </summary>
-        /// <param name="door">Door 对象（仅用于提取数据，不会保存引用）</param>
+        /// <param name="door">Door 对象</param>
         /// <param name="sceneId">场景ID</param>
         /// <param name="subSceneId">子场景ID</param>
         /// <returns>创建或更新的 DoorInfo</returns>
@@ -126,7 +125,7 @@ namespace AutoMarkKeyDoor
                 return existingInfo;
             }
             
-            // 创建新的 DoorInfo（纯数据）
+            // 创建新的 DoorInfo
             DoorInfo doorInfo = new DoorInfo
             {
                 UniqueKey = uniqueKey,

@@ -332,10 +332,7 @@ namespace AutoMarkKeyDoor
             try
             {
                 var levelInfo = LevelManager.GetCurrentLevelInfo();
-                if (levelInfo != null)
-                {
-                    return levelInfo.ID ?? levelInfo.sceneName ?? "Unknown";
-                }
+                return levelInfo.sceneName ?? "Unknown";
             }
             catch (Exception e)
             {
@@ -353,10 +350,7 @@ namespace AutoMarkKeyDoor
             try
             {
                 var levelInfo = LevelManager.GetCurrentLevelInfo();
-                if (levelInfo != null)
-                {
-                    return levelInfo.activeSubSceneID ?? "Default";
-                }
+                return levelInfo.activeSubSceneID ?? "Default";
             }
             catch (Exception e)
             {

@@ -1,8 +1,4 @@
-﻿using System;
-using Duckov.UI;
-using Duckov.Utilities;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 using HarmonyLib;
 
 namespace AutoMarkKeyDoor

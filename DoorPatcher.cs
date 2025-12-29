@@ -18,7 +18,6 @@ namespace AutoMarkKeyDoor
         /// 在门初始化完成后提取信息并注册
         /// </summary>
         /// <param name="__instance">Door 实例</param>
-        [HarmonyPostfix]
         public static void Postfix(Door __instance)
         {
             Debug.Log(LogPrefix + $">>> Door.Start Postfix 触发 <<<");
@@ -78,10 +77,7 @@ namespace AutoMarkKeyDoor
                 if (MultiSceneCore.Instance != null)
                 {
                     var levelInfo = LevelManager.GetCurrentLevelInfo();
-                    if (levelInfo != null)
-                    {
-                        return levelInfo.ID ?? "Unknown";
-                    }
+                    return levelInfo.sceneName ?? "Unknown";
                 }
             }
             catch (System.Exception e)
@@ -100,10 +96,7 @@ namespace AutoMarkKeyDoor
             try
             {
                 var levelInfo = LevelManager.GetCurrentLevelInfo();
-                if (levelInfo != null)
-                {
-                    return levelInfo.activeSubSceneID ?? "Default";
-                }
+                return levelInfo.activeSubSceneID ?? "Default";
             }
             catch (System.Exception e)
             {
