@@ -17,6 +17,7 @@ namespace AutoMarkKeyDoor
         private const string HarmonyId = "com.automarkeydoor.mod";
         
         private Harmony _harmony;
+        private DoorMarkerManager _markerManager;
         
         /// <summary>
         /// Mod 单例实例
@@ -56,6 +57,20 @@ namespace AutoMarkKeyDoor
             {
                 Debug.LogError(LogPrefix + $"应用补丁失败: {e.Message}\n{e.StackTrace}");
             }
+            
+            // 创建门标记管理器
+            try
+            {
+                if (_markerManager == null)
+                {
+                    _markerManager = gameObject.AddComponent<DoorMarkerManager>();
+                    Debug.Log(LogPrefix + "DoorMarkerManager 组件已创建");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(LogPrefix + $"创建 DoorMarkerManager 失败: {e.Message}");
+            }
         }
         
         void OnDisable()
@@ -71,6 +86,14 @@ namespace AutoMarkKeyDoor
             catch (System.Exception e)
             {
                 Debug.LogError(LogPrefix + $"卸载补丁失败: {e.Message}");
+            }
+            
+            // 销毁门标记管理器
+            if (_markerManager != null)
+            {
+                Destroy(_markerManager);
+                _markerManager = null;
+                Debug.Log(LogPrefix + "DoorMarkerManager 组件已销毁");
             }
             
             // 输出最终的门统计信息
@@ -89,6 +112,13 @@ namespace AutoMarkKeyDoor
             
             // 确保补丁被卸载
             _harmony?.UnpatchAll(HarmonyId);
+            
+            // 确保管理器被销毁
+            if (_markerManager != null)
+            {
+                Destroy(_markerManager);
+                _markerManager = null;
+            }
             
             Debug.Log(LogPrefix + "Mod 已销毁");
         }
