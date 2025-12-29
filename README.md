@@ -26,7 +26,7 @@
 
 ### Manual Installation
 
-1. Download the release package ``
+1. Download the release package [release.zip](build\release.zip)
 2. Extract the archive to your Duckov mods folder
 3. The mod will be automatically loaded when you start the game
 
@@ -70,7 +70,7 @@ This project is open source. Feel free to use, modify, and distribute.
 
 ### 手动安装
 
-1. 下载发布压缩包 ``
+1. 下载发布压缩包 [release.zip](build\release.zip)
 2. 将压缩包解压到 Duckov mods 文件夹
 3. 启动游戏时 Mod 将自动加载
 
