@@ -33,7 +33,6 @@ namespace AutoMarkKeyDoor
                 string sceneId = GetCurrentSceneID();
                 string subSceneId = GetCurrentSubSceneID();
                 
-                // 详细日志仅在 VERBOSE 模式下输出
                 ModLogger.LogVerbose(Category, $"捕获到门初始化:");
                 ModLogger.LogVerbose(Category, $"  - 位置: {__instance.transform.position}");
                 ModLogger.LogVerbose(Category, $"  - 场景ID: {sceneId}");

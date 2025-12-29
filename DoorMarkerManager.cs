@@ -215,13 +215,11 @@ namespace AutoMarkKeyDoor
         /// </summary>
         private List<DoorInfo> GetFilteredDoorList()
         {
-            // 如果有筛选UI，使用其筛选条件
             if (DoorFilterUI.Instance != null)
             {
                 return DoorFilterUI.Instance.GetFilteredDoors();
             }
             
-            // 默认返回所有需要钥匙的门
             return KeyDoorManager.GetAllLockedDoors();
         }
         
@@ -233,11 +231,9 @@ namespace AutoMarkKeyDoor
         {
             ModLogger.LogVerbose(Category, $"正在为门 [Key={door.UniqueKey}, Name={door.DoorName}] 创建标记，位置: {door.Position}");
             
-            // 创建标记对象
             GameObject markerObject = new GameObject($"DoorMarker_{door.UniqueKey}");
             markerObject.transform.position = door.Position;
             
-            // 添加 SimplePointOfInterest 组件
             SimplePointOfInterest poi;
             try
             {
@@ -250,13 +246,10 @@ namespace AutoMarkKeyDoor
                 return;
             }
             
-            // 获取图标
             Sprite iconToUse = GetDoorIcon();
             
-            // 使用门名称作为标记名称
             string markerName = !string.IsNullOrEmpty(door.DoorName) ? door.DoorName : $"门#{door.RequireItemId}";
             
-            // 设置标记
             try
             {
                 poi.Setup(iconToUse, markerName, followActiveScene: true);
@@ -272,7 +265,7 @@ namespace AutoMarkKeyDoor
             bool hasKey = KeyItemHelper.HasKeyForDoor(door);
             poi.Color = hasKey ? Color.green : Color.yellow;  // 拥有钥匙为绿色，否则为黄色
             poi.IsArea = false;        // 不显示区域圆圈
-            poi.AreaRadius = 0f;       // 半径为0
+            poi.AreaRadius = 0f;       
             
             poi.ShadowColor = Color.black;
             poi.ShadowDistance = 0f;

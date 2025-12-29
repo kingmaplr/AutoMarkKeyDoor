@@ -16,13 +16,11 @@ namespace AutoMarkKeyDoor
         
         /// <summary>
         /// 缓存钥匙ID到门名称的映射
-        /// 预估初始容量为16，减少扩容次数
         /// </summary>
         private static Dictionary<int, string> _keyIdToDoorNameCache = new Dictionary<int, string>(16);
         
         /// <summary>
         /// 获取所有可能的钥匙物品ID列表
-        /// 使用 MasterKeysManager.AllPossibleKeys 获取
         /// </summary>
         public static List<int> GetAllPossibleKeyIds()
         {
